@@ -1,21 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    告诉系统「这个引擎会哪些语言」。
-    系统的「文字转语音」设置页和 TextToSpeech.isLanguageAvailable 都会读这里。
-    两种口音各一档：美式发音走 en_US 模型，英式发音走 en_GB 模型。
+    这个文件是 TTS 引擎的「自我介绍」，通过 AndroidManifest 里的
+    <meta-data android:name="android.speech.tts" android:resource="@xml/tts_engine"/>
+    被系统的「文字转语音」设置页读取，用来在不启动引擎的情况下知道它会哪些语言。
 
-    注意：<lang> 只认 android:name / android:country / android:variant 三个属性，
-    写 displayName 之类的会直接 AAPT 报错（显示名由系统按 locale 自己生成）。
+    两个坑（都踩过）：
+    1. 只有 android:settingsActivity 是框架定义的属性，其它写着 android: 前缀的
+       （displayName / displayCountry / country / variant）AAPT 会直接报错；
+    2. <lang> 的这些属性是运行期按「无命名空间」读的，所以不能加 android: 前缀。
+
+    真正的语言能力仍以 TtsEngineService.onGetVoices / onIsLanguageAvailable 为准，
+    这里只是给系统设置页显示用。
 -->
 <tts-engine xmlns:android="http://schemas.android.com/apk/res/android">
     <languages>
-        <lang
-            android:name="eng"
-            android:country="USA"
-            android:variant="" />
-        <lang
-            android:name="eng"
-            android:country="GBR"
-            android:variant="" />
+        <lang name="eng" country="USA" variant="" />
+        <lang name="eng" country="GBR" variant="" />
     </languages>
 </tts-engine>
