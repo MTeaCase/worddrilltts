@@ -3,18 +3,19 @@
     告诉系统「这个引擎会哪些语言」。
     系统的「文字转语音」设置页和 TextToSpeech.isLanguageAvailable 都会读这里。
     两种口音各一档：美式发音走 en_US 模型，英式发音走 en_GB 模型。
+
+    注意：<lang> 只认 android:name / android:country / android:variant 三个属性，
+    写 displayName 之类的会直接 AAPT 报错（显示名由系统按 locale 自己生成）。
 -->
 <tts-engine xmlns:android="http://schemas.android.com/apk/res/android">
     <languages>
         <lang
             android:name="eng"
             android:country="USA"
-            android:displayName="English (United States)"
-            android:displayCountry="United States" />
+            android:variant="" />
         <lang
             android:name="eng"
             android:country="GBR"
-            android:displayName="English (United Kingdom)"
-            android:displayCountry="United Kingdom" />
+            android:variant="" />
     </languages>
 </tts-engine>
