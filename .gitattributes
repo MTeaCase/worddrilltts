@@ -1,0 +1,11 @@
+# 二进制一律原样对待：模型和原生库被换行符改写会直接坏掉
+app/src/main/assets/** -text
+app/src/main/jniLibs/** -text
+/app/src/main/res/**/*.png binary
+*.onnx binary
+*.so binary
+*.p12 binary
+
+# 其余文本统一 LF 存仓库
+* text=auto eol=lf
+*.bat text eol=crlf

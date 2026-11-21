@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 只有合成，不联网、不录音、不读联系人 -->
+    <application
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/engine_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true">
+
+        <!--
+            标准 TTS 引擎声明。
+
+            注意：这里故意不写 android:permission。AOSP 里 BIND_TEXT_SERVICE 是
+            signature 级权限（给 TextClassifier 用的），引擎声明它会导致普通应用
+            连不上；系统 TTS 客户端 bindService 时也不带额外权限，国内外离线 TTS
+            引擎（如 chinesetts-tflite、eSpeak NG）都是照样只导出不声明权限。
+
+            exported=true 是必须的：Android 12+ 带 intent-filter 的组件强制要写。
+        -->
+        <service
+            android:name=".TtsEngineService"
+            android:exported="true"
+            android:label="@string/engine_name">
+
+            <intent-filter>
+                <action android:name="android.intent.action.TTS_SERVICE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.speech.tts"
+                android:resource="@xml/tts_engine" />
+        </service>
+    </application>
+
+</manifest>

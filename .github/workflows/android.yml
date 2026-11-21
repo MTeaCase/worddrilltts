@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+
+      - name: Install Android SDK platform 36
+        run: |
+          SDKMANAGER="${ANDROID_HOME:-/usr/local/lib/android/sdk}/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --licenses > /dev/null || true
+          "$SDKMANAGER" "platforms;android-36"
+
+      - name: Build engine APK
+        run: |
+          chmod +x gradlew
+          ./gradlew :app:assembleDebug --no-daemon
+
+      # 包内结构自查：原生库、模型、espeak 数据一个都不能少，少了就是构建配置坏了
+      - name: Verify APK contents
+        run: |
+          APK=app/build/outputs/apk/debug/app-debug.apk
+          ls -l "$APK"
+          echo "---- libs"
+          unzip -l "$APK" | grep 'lib/arm64-v8a/' || (echo "缺少原生库"; exit 1)
+          echo "---- assets"
+          for f in us.onnx uk.onnx tokens.txt espeak-ng-data/en_dict espeak-ng-data/phondata; do
+            unzip -l "$APK" | grep -q "assets/tts/$f" || (echo "缺少 assets/tts/$f"; exit 1)
+          done
+          echo "assets 文件数: $(unzip -l "$APK" | grep -c 'assets/tts/')"
+
+      # TTS 服务声明自查：action / meta-data 缺一个，系统就发现不了这个引擎
+      - name: Verify TTS service declaration
+        run: |
+          BUILD_TOOLS=$(ls -d "${ANDROID_HOME:-/usr/local/lib/android/sdk}/build-tools/"* | sort -V | tail -1)
+          APK=app/build/outputs/apk/debug/app-debug.apk
+          "$BUILD_TOOLS/aapt2" dump xmltree "$APK" --file AndroidManifest.xml > /tmp/manifest.txt
+          grep -q 'android.intent.action.TTS_SERVICE' /tmp/manifest.txt || (echo "缺少 TTS_SERVICE action"; exit 1)
+          grep -q 'android.speech.tts' /tmp/manifest.txt || (echo "缺少 tts metadata"; exit 1)
+          grep -q 'com.worddrill.tts' /tmp/manifest.txt || (echo "包名不对"; exit 1)
+          echo "manifest OK"
+
+      # 每个版本都要能覆盖安装：签名证书必须和主 App 那把是同一张
+      - name: Print signing certificate
+        run: |
+          BUILD_TOOLS=$(ls -d "${ANDROID_HOME:-/usr/local/lib/android/sdk}/build-tools/"* | sort -V | tail -1)
+          "$BUILD_TOOLS/apksigner" verify --print-certs app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: WordDrill-tts-engine-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error

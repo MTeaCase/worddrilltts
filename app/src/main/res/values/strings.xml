@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 这个 App 没有界面，名字只出现在系统的「文字转语音」引擎列表和「应用」列表里 -->
+    <string name="engine_name">WordDrill 离线语音</string>
+</resources>
